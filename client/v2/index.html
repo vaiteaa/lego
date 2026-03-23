@@ -146,6 +146,71 @@ header p {
 
     .filter-btn:hover { border-color: var(--accent); color: var(--accent3); }
     .filter-btn.active { background: var(--accent2); color: #000; border-color: var(--accent2); font-weight: 600; }
+ 
+    /* ── PAGINATION ──────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+  padding-bottom: 32px;
+}
+
+.page-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all .2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.page-num {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all .2s;
+  min-width: 40px;
+  text-align: center;
+}
+
+.page-num:hover {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+
+.page-num.active {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #fff;
+}
 
     /* ── MAIN ────────────────────────────────────────────────────────────── */
     main {
@@ -393,11 +458,6 @@ header p {
             <option value="24">24</option>
           </select>
         </div>
-        <br>
-        <div class="control-group">
-          <label for="page-select">Page</label>
-          <select id="page-select"></select>
-        </div>
       </div>
 
       <div class="sidebar-section">
@@ -470,11 +530,19 @@ header p {
 
       <hr class="section-divider">
 
+
       <!-- DEALS -->
       <section id="deals">
         <h2 class="deals-header">Deals</h2>
         <p class="empty">Loading deals…</p>
       </section>
+
+      <!-- PAGINATION -->
+      <div class="pagination">
+        <button class="page-btn" id="prev-btn">← Previous</button>
+        <div class="page-numbers" id="page-numbers"></div>
+        <button class="page-btn" id="next-btn">Next →</button>
+      </div>
 
     </main>
   </div>

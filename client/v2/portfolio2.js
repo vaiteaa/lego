@@ -11,7 +11,6 @@ let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
 // ─── SELECTORS ───────────────────────────────────────────────────────────────
 
 const selectShow        = document.querySelector('#show-select');
-const selectPage        = document.querySelector('#page-select');
 const selectSort        = document.querySelector('#sort-select');
 const sectionDeals      = document.querySelector('#deals');
 const spanNbDeals       = document.querySelector('#nbDeals');
@@ -138,11 +137,67 @@ const renderDeals = deals => {
 
 const renderPagination = pagination => {
   const { currentPage, pageCount } = pagination;
-  const options = Array.from({ length: pageCount }, (_, i) =>
-    `<option value="${i + 1}">${i + 1}</option>`
-  ).join('');
-  selectPage.innerHTML = options;
-  selectPage.selectedIndex = currentPage - 1;
+  
+  // Boutons prev/next
+  const prevBtn = document.querySelector('#prev-btn');
+  const nextBtn = document.querySelector('#next-btn');
+  const pageNumbers = document.querySelector('#page-numbers');
+  
+  if (!prevBtn || !nextBtn || !pageNumbers) return;
+  
+  prevBtn.disabled = currentPage === 1;
+  nextBtn.disabled = currentPage === pageCount;
+  
+  // Générer les numéros de pages (max 7 numéros visibles)
+  let pages = [];
+  if (pageCount <= 7) {
+    pages = Array.from({ length: pageCount }, (_, i) => i + 1);
+  } else {
+    if (currentPage <= 4) {
+      pages = [1, 2, 3, 4, 5, '...', pageCount];
+    } else if (currentPage >= pageCount - 3) {
+      pages = [1, '...', pageCount - 4, pageCount - 3, pageCount - 2, pageCount - 1, pageCount];
+    } else {
+      pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', pageCount];
+    }
+  }
+  
+  pageNumbers.innerHTML = pages.map(page => {
+    if (page === '...') {
+      return '<span class="page-num" style="cursor:default; border:none;">…</span>';
+    }
+    return `<button class="page-num ${page === currentPage ? 'active' : ''}" data-page="${page}">${page}</button>`;
+  }).join('');
+  
+  // Listeners sur les numéros
+  pageNumbers.querySelectorAll('.page-num[data-page]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const page = parseInt(btn.dataset.page);
+      const data = await fetchDeals(page, parseInt(selectShow.value));
+      setCurrentDeals(data);
+      render(currentDeals, currentPagination);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+  
+  // Listeners prev/next
+  prevBtn.onclick = async () => {
+    if (currentPage > 1) {
+      const data = await fetchDeals(currentPage - 1, parseInt(selectShow.value));
+      setCurrentDeals(data);
+      render(currentDeals, currentPagination);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  nextBtn.onclick = async () => {
+    if (currentPage < pageCount) {
+      const data = await fetchDeals(currentPage + 1, parseInt(selectShow.value));
+      setCurrentDeals(data);
+      render(currentDeals, currentPagination);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 };
 
 // ─── RENDER INDICATORS ───────────────────────────────────────────────────────
@@ -150,6 +205,7 @@ const renderPagination = pagination => {
 const renderIndicators = pagination => {
   spanNbDeals.textContent = pagination.count || 0;
 };
+
 
 // ─── RENDER VINTED SALES ─────────────────────────────────────────────────────
 
@@ -229,9 +285,21 @@ const render = (deals, pagination) => {
   renderPagination(pagination);
   renderIndicators(pagination);
   
-  // Load vinted for first deal's set ID
-  if (deals.length > 0 && deals[0].id) {
-    fetchSales(deals[0].id).then(renderSales);
+  // Populate Vinted set IDs dropdown
+  const selectLegoSetIds = document.querySelector('#lego-set-id-select');
+  if (selectLegoSetIds && deals.length > 0) {
+    const ids = getIdsFromDeals(deals);
+    console.log('Available set IDs:', ids);
+    
+    selectLegoSetIds.innerHTML = ids.map(id => 
+      `<option value="${id}">${id}</option>`
+    ).join('');
+    
+    // Load vinted for first ID AND update deals count
+    if (ids.length > 0) {
+      updateDealsCountForSet(deals, ids[0]);
+      fetchSales(ids[0]).then(renderSales);
+    }
   }
 };
 
@@ -244,12 +312,6 @@ selectShow.addEventListener('change', async event => {
   render(currentDeals, currentPagination);
 });
 
-// Feature 1: browse pages
-selectPage.addEventListener('change', async event => {
-  const data = await fetchDeals(parseInt(event.target.value), parseInt(selectShow.value));
-  setCurrentDeals(data);
-  render(currentDeals, currentPagination);
-});
 
 // Features 2, 3, 4, 14: filters
 filterBtns.forEach(btn => {
@@ -271,6 +333,22 @@ if (selectSort) {
   selectSort.addEventListener('change', event => {
     currentSort = event.target.value;
     renderDeals(currentDeals);
+  });
+}
+
+// Feature 7-10: Load Vinted sales when set ID changes
+const selectLegoSetIds = document.querySelector('#lego-set-id-select');
+if (selectLegoSetIds) {
+  selectLegoSetIds.addEventListener('change', async event => {
+    const setId = event.target.value;
+    if (setId) {
+      // Update deals count for this set
+      updateDealsCountForSet(currentDeals, setId);
+      
+      // Fetch and render Vinted sales
+      const sales = await fetchSales(setId);
+      renderSales(sales);
+    }
   });
 }
 

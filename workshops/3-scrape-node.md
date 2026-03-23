@@ -1,4 +1,4 @@
-# 🧹 Step 3 - Scrape the Deals and the Sales
+npm # 🧹 Step 3 - Scrape the Deals and the Sales
 
 > How to manipulate and data with JavaScript from server side
 
